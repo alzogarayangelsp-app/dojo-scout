@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dojo Scout San Pedro - Control de Cuotas</title>
+
+  <!-- Íconos y configuración para navegador y acceso directo en celular -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <meta name="theme-color" content="#b91c1c">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -36,10 +42,13 @@
 <body class="bg-gray-100 min-h-screen font-sans text-gray-800">
   <div class="max-w-xl mx-auto bg-white min-h-screen shadow-lg flex flex-col justify-between">
     
-    <!-- Header -->
-    <header class="bg-red-700 text-white p-4 text-center font-bold text-xl shadow flex justify-between items-center">
-      <span onclick="mostrarVista('login-view')" class="cursor-pointer">Dojo Scout San Pedro</span>
-      <button onclick="solicitarAccesoAdmin()" class="text-xs bg-red-800 hover:bg-red-900 px-2 py-1 rounded transition">Panel Admin</button>
+    <!-- Header con Logo -->
+    <header class="bg-red-700 text-white p-3 text-center font-bold text-xl shadow flex justify-between items-center">
+      <div onclick="mostrarVista('login-view')" class="flex items-center gap-2 cursor-pointer">
+        <img src="logo.png" alt="Dojo Scout" class="h-9 w-9 object-contain bg-white rounded-full p-0.5">
+        <span class="font-bold text-lg sm:text-xl">Dojo Scout San Pedro</span>
+      </div>
+      <button onclick="solicitarAccesoAdmin()" class="text-xs bg-red-800 hover:bg-red-900 px-2.5 py-1.5 rounded transition">Panel Admin</button>
     </header>
 
     <!-- Contenido Principal -->
@@ -203,6 +212,7 @@
 
   <script>
     const TELEFONO_WHATSAPP = "5493329478951";
+    const CORREO_RECUPERACION = "alzogarayangelsp@gmail.com";
     const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     let configApp = {
@@ -263,18 +273,23 @@
 
     async function solicitarAccesoAdmin() {
       await cargarConfiguracion();
-      const pass = prompt("Ingresá la clave de administrador:");
+      const pass = prompt("Ingresá la clave de administrador:\n(O cancelá e ingresá a 'Olvidé mi contraseña')");
       
       if (pass === configApp.claveAdmin) {
         mostrarVista("admin-view");
         cargarPanelAdmin();
       } else if (pass !== null) {
-        const pedirRecuperacion = confirm("Clave incorrecta. ¿Querés enviar una solicitud de recuperación por WhatsApp?");
-        if (pedirRecuperacion) {
-          const mensaje = encodeURIComponent(`Hola Sensei, solicito el envío de la clave actual del panel de administración del Dojo Scout.`);
-          window.open(`https://wa.me/${TELEFONO_WHATSAPP}?text=${mensaje}`, "_blank");
+        const opcion = confirm("Clave incorrecta.\n\n¿Querés enviar un correo de recuperación a alzogarayangelsp@gmail.com con el recordatorio de tu clave?");
+        if (opcion) {
+          enviarRecuperacionCorreo();
         }
       }
+    }
+
+    function enviarRecuperacionCorreo() {
+      const asunto = encodeURIComponent("Recordatorio de Clave Panel Admin - Dojo Scout");
+      const cuerpo = encodeURIComponent(`Hola Ángel,\n\nTu contraseña actual para acceder al Panel de Control del Dojo Scout San Pedro es: ${configApp.claveAdmin}\n\nUn saludo.`);
+      window.open(`mailto:${CORREO_RECUPERACION}?subject=${asunto}&body=${cuerpo}`, "_self");
     }
 
     async function cargarPanelAdmin() {
@@ -309,7 +324,6 @@
       const listaDiv = document.getElementById("admin-lista-alumnos");
       listaDiv.innerHTML = "";
 
-      // Contar avisos de validación pendientes
       let solicitudesPendientes = [];
       listaAlumnosCache.forEach(alumno => {
         if (alumno.solicitudesAviso) {
@@ -336,7 +350,6 @@
         badgeCount.classList.add("hidden");
       }
 
-      // Si la pestaña actual es la de "validar"
       if (filtroActual === "validar") {
         if (solicitudesPendientes.length === 0) {
           listaDiv.innerHTML = "<p class='text-xs text-gray-400 text-center py-4'>No hay avisos de pago pendientes para validar.</p>";
